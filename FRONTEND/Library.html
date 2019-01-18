@@ -1,0 +1,471 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="text/javascript" src="js/numerics.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.image.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.time.js"></script>
+<script type="text/javascript" src="js/calculations.js"></script>
+<script type="text/javascript" src="js/numerics126.js"></script>
+<script type="text/javascript" src="js/canvas2image.js"></script>
+<script type="text/javascript" src="js/base64.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<link rel="stylesheet" href="css/bootstrap.css">
+<style>
+	#allbutton1,#allbutton2,#allbutton3{
+		border-right: 1px solid #1f2d4d;
+		border-top: 1px solid #38538c;
+		border-bottom: 1px solid #151e33;
+		border-left: 1px solid #1f2d4d;
+		border-radius:4px;
+		padding: 10px 5px 12px 5px;
+		text-align: center;
+		text-shadow: 0 -1px 1px #1e2d4d;
+		width:150px;
+		color:#fff;	
+		font: bold 15px/1 "helvetica neue", helvetica, arial, sans-serif;
+		-webkit-background-clip: padding-box;	
+		
+	}	
+	#allbut{
+		background:rgba(240,240,240,0.85);
+		border:1.5px solid gray;
+		position:fixed;
+		width:50%;
+		margin-top:70px;
+		margin-left:50%;
+		z-index:2000 !important;
+		padding:10px;
+	}		
+	#allbut2{
+		background:rgba(200,240,200,0);
+		border:1.5px solid gray;
+		position:fixed;
+		width:10%;
+		bottom:0px;
+		right:25px;
+		z-index:10000 !important;
+		padding:10px;
+	}	
+	.pressed{
+		background:rgb(240,100,100);
+	}
+	#clearbox{
+		background:rgba(240,150,150,0.9);
+		width: 30%;
+		position:fixed;
+		left:35%;
+		height:100px;
+		z-index:11000 !important;
+		top:30%;
+		border:2px solid red;
+	}	
+	#tabdiv{
+		background:rgba(240,240,240,0.8);
+		width:75% !important;
+		position:fixed;
+		height:80%;
+		left:12.5%;
+		top:100px;
+		overflow:scroll;
+		z-index:9999 !important;
+		border: 2px solid rgb(120,120,230);
+	}
+</style>
+<script>
+	$(document).ready(function(){
+		$("#clearbox").hide();
+		$("#allbut").hide();
+		$("#allbut2").hide();		
+		$("#tabdiv").hide();
+		if(localStorage.getItem("check")===null)
+		{
+			$("#midlevel").append('<h4 style="margin-left:25px;margin-top:10px">No Plots saved yet</h4>');
+		}
+		else
+		{
+			var Hl    =JSON.parse(localStorage["lengthH"]);
+			var Dl    =JSON.parse(localStorage["lengthD"]);
+			var H     =JSON.parse(localStorage["collectH"]);
+			var D     =JSON.parse(localStorage["collectD"]);
+			var Dates =JSON.parse(localStorage["Dates"]);												
+			var Names =JSON.parse(localStorage["Names"]);																	
+			var params=JSON.parse(localStorage["params"]);																	
+			var lengs =JSON.parse(localStorage["lengs"]);	
+			var plotnames =JSON.parse(localStorage["Plotname"]);																										
+			for(var i=0;i<(Hl.length-1);i++){
+				$("#midlevel").append('<button style="position:absolute;right:25px;background:rgb(230,230,230);color:black" name="infobuttons" type="button" class="btn btn-info" onclick="callf(this)">Info</button>').append($('<h4 style="margin-left:25px">').text(plotnames[i+1]+", "+Dates[i+1]+", from "+Names[i+1])).append('<div class="plt" style="width:800px;height:400px"></div>').append("<br/><hr><br/>");
+			}
+			
+			var divs=document.getElementsByClassName("plt");
+
+			for(var i=0;i<divs.length;i++){
+				Dn     =new Array(Dl[i+1]);
+				Hn     =new Array(Hl[i+1]);
+				var sumd = 1;
+				var sumh = 1;
+				for(var j=0;j<(i);j++){
+					sumh = sumh+Hl[1+j];
+					sumd = sumd+Dl[1+j];					
+				}			
+				
+				for(var j=0;j<Dn.length;j++){
+					Dn[j]=new Array(2);										
+				}
+
+				for(var j=0;j<Dn.length;j++){
+					Dn[j][0]=D[j+sumd][0];
+					Dn[j][1]=D[j+sumd][1];
+				}												
+				
+				for(var j=0;j<Hn.length;j++){
+					Hn[j]=new Array(2);	
+					Hn[j][0]=H[j+sumh][0];
+					Hn[j][1]=H[j+sumh][1];
+				}
+				Datesn =Dates[i];
+				Namesn =Names[i];
+				var lengsum = 4;
+				for(var j=0;j<i;j++){
+					lengsum=lengsum+lengs[j+1];
+				}
+				var paramsi = new Array(lengs[i+1]);
+				for(var j=0;j<paramsi.length;j++){
+					paramsi[j]=params[lengsum+j];
+				}	
+				var t = new Array(Hn.length-1);
+				var M = new Array(Hn.length-1);	
+						
+				for(var j=0;j<Hn.length-1;j++){
+					t[j]=Hn[j+1][0];
+					M[j]=Hn[j+1][1];					
+				}	
+		
+				var fndata = logistic_func(t,paramsi[0],paramsi[1],paramsi[2],paramsi[3]);
+
+				var zeros = 0;
+				var ones  = 0;
+				var twos  = 0;
+				var arrgoodt = new Array();
+				var arrgoodM = new Array();	
+				var arrokt   = new Array();
+				var arrokM   = new Array();	
+				var arrbadt  = new Array();
+				var arrbadM  = new Array();	
+
+				for(var j=0;j<t.length;j++){
+					if(Math.sqrt(Math.pow((M[j]-fndata[j]),2))/fndata[j]<=0.1){
+						arrgoodt.push(t[j]);
+						arrgoodM.push(M[j]);
+						zeros=zeros+1;			
+					}else if(0.3>(Math.sqrt(Math.pow((M[j]-fndata[j]),2))/fndata[j])>0.1){			
+						arrokt.push(t[j]);
+						arrokM.push(M[j]);	
+						ones=ones+1;								
+					}else{
+						arrbadt.push(t[j]);
+						arrbadM.push(M[j]);
+						twos=twos+1;						
+					}
+				}
+				
+				var A = new Array(zeros+1);
+				var B = new Array(ones+1);
+				var C = new Array(twos+1);
+				
+				A[0]=new Array(2);
+				B[0]=new Array(2);
+				C[0]=new Array(2);		
+				for(var j=1;j<zeros+1;j++){
+					A[j]=new Array(2);
+					A[j][0]=arrgoodt[j-1];
+					A[j][1]=arrgoodM[j-1];		
+				}
+				for(var j=1;j<ones+1;j++){
+					B[j]=new Array(2);
+					B[j][0]=arrokt[j-1];
+					B[j][1]=arrokM[j-1];		
+				}
+				for(var j=1;j<twos+1;j++){
+					C[j]=new Array(2);
+					C[j][0]=arrbadt[j-1];
+					C[j][1]=arrbadM[j-1];		
+				}	
+				A[0][0]="Time [s]";
+				A[0][1]="Concentration [cells/ml]";
+				B[0][0]="Time [s]";
+				B[0][1]="Concentration [cells/ml]";
+				C[0][0]="Time [s]";
+				C[0][1]="Concentration [cells/ml]";	
+							
+				plotin(divs[i],Dn,A,B,C,Datesn,Namesn);
+			}
+		}
+	});
+
+	function plotin(mn,D,A,B,C,Dt,Nm){
+
+	    var data = [
+                { label: 'fnm-fit',
+                data: D,
+                color:"rgb(20,20,20)",
+                lines: {show: true},
+                points: {show:false},
+                clickable:true,
+                hoverable:true               
+                },
+                {label: 'Good Measurement',
+                data: A,
+                color:"rgb(10,180,20)",
+                lines: {show:false},
+                points: {show:true},
+                clickable:true,
+                hoverable:true                
+                },            
+                {label: 'Mediocre Measurement',
+                data: B,
+                color:"orange",
+                lines: {show:false},
+                points: {show:true},
+                clickable:true,
+                hoverable:true                
+                },
+                {label: 'Bad Measurement',
+                data: C,
+                color:"rgb(230,20,20)",
+                lines: {show:false},
+                points: {show:true},
+                clickable:true,
+                hoverable:true                
+                }                                
+                ];
+                
+    
+            var options = {
+                grid: {
+                    hoverable: true,
+                    clickable: true},
+                legend: {
+                    show: true,
+                    margin: 10,
+                    backgroundOpacity: 0.5
+                }
+            };
+ 	
+	var plot = $.plot($(mn),
+	data,
+	options);			
+    $(mn).bind("plotclick", function(event, pos, item){
+		if(item){
+			alert("Time [s]: " + item.datapoint[0].toFixed(2) + ', '+"Concentration [cells/ml]: " + item.datapoint[1].toFixed(2));
+			}
+		});		
+	}
+
+</script>
+</head>
+<body>
+<div id="toplevel">
+	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" style="opacity:0.75;height:50px;z-index:9000 !important">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  		<div class="navbar-header">
+	  		<a class="navbar-brand" href="#">Proliferation Control</a>
+	  		<button type="button" class="btn btn-default navbar-btn navbar-right" style="position:fixed;left:40%">Signed in as <i>Karsten</i></button>
+	  		<a type="button" class="btn btn-default navbar-btn navbar-right" style="position:fixed;left:75%;background:rgb(230,230,230)" href="CellRegulator.html"><b>Go Back</b></a><a type="button" class="btn btn-default navbar-btn navbar-right" style="position:fixed;left:95%;background:rgb(255,255,255)" id="work"><b><span class="glyphicon glyphicon-wrench"></span></b></a>	  			  		
+	  	</div>
+	</nav>
+</div>
+<script>
+	$("#work").click(function(mr){
+		$("#allbut").slideToggle();
+	});
+</script>
+<div id="allbut">
+<a type="button" class="btn btn-default" id="allbutton1" style="margin-left:25px;background:rgb(30,30,30)">Send all</a>
+<a type="button" class="btn btn-success" id="allbutton2" style="margin-left:25px">Show all tables</a>
+<a type="button" class="btn btn-danger" id="allbutton3" style="margin-left:25px">Delete all</a>
+</div>
+<script>
+	$("#allbutton3").click(function(){
+		$("#clearbox").slideDown();
+	});
+</script>
+<div id="allbut2" >
+<a type="button" class="btn btn-default" style="margin-left:25px;left:20px">Email</a><br/><br/>
+<a type="button" class="btn btn-default" id="showtab" style="margin-left:25px;left:20px">Data</a><br/><br/>
+<a type="button" class="btn btn-default"  id="clearone" style="margin-left:25px;left:20px">Clear</a><br/><br/>
+<a type="button" class="btn btn-default"  style="margin-left:25px;left:20px">More</a><br/><br/>
+<a type="button" class="btn btn-default"  style="margin-left:25px; border-radius:2px; background:rgba(0,0,0,1); color:rgb(255,255,255); left:20px" id="closing">Close</a>
+</div>
+<div id="clearbox">
+	<h5 style="margin-left:25px">Are you sure you want to delete all the data?</h5>
+	<br/>
+	<button type="button" class="btn btn-default" style="margin-left:25px" id="boxcancel">Cancel</button>
+	<button type="button" class="btn btn-danger" style="margin-left:25px" id="boxcontinue">Continue & Clear</button>
+</div>
+<script>
+	$("#boxcancel").click(function(){
+		$("#clearbox").hide();
+		$("#allbut").hide();
+	});
+	$("#boxcontinue").click(function(){
+		$("#clearbox").hide();
+		$("#allbut").hide();		
+		localStorage.clear();
+		window.location.reload();																					
+	});	
+</script>
+<script>
+//Check if other buttons are clicked
+	function callf(mr){		
+		if(($("#allbut2").is(":visible"))&&($(mr).text()=="Info"))
+		{
+			alert("Please close other windows first!");
+		}
+		else
+		{
+			
+			$("#allbut2").slideToggle();			
+			if($(mr).text()=="Info"){		
+				$(mr).text("Choose");
+				$(mr).css("color","white");			
+				$(mr).css("background","red");
+				$("#clearone").click(function(){
+					var Hlengs = JSON.parse(localStorage["lengthH"]);
+					var Dlengs = JSON.parse(localStorage["lengthD"]);
+					var Dates = JSON.parse(localStorage["Dates"]);
+					var Names = JSON.parse(localStorage["Names"]);										
+					var Hcollect = JSON.parse(localStorage["collectH"]);
+					var Dcollect = JSON.parse(localStorage["collectD"]);	
+					var params = JSON.parse(localStorage["params"]);
+					var lengs = JSON.parse(localStorage["lengs"]);			
+					var infobuttons = document.getElementsByName("infobuttons");	
+							
+					for(var i=0;i<(Hlengs.length-1);i++){
+
+						if($(mr).text()==$(infobuttons[i]).text()){
+							//Clear specified data
+							var sumH = 0;
+							var sumD = 0;
+							for(var j=1;j<(i+1);j++){
+								sumH = Hlengs[j]+sumH;
+								sumD = Dlengs[j]+sumD;								
+							}				
+							Hcollect.splice(sumH+1,Hlengs[i+1]);
+							Dcollect.splice(sumD+1,Dlengs[i+1]);
+							Dlengs.splice(i+1,1);
+							Hlengs.splice(i+1,1);	
+							Dates.splice(i+1,1);
+							Names.splice(i+1,1);
+							params.splice((4*i)+4,4);
+							lengs.splice(i+1,1);
+							localStorage["collectD"]=JSON.stringify(Dcollect);
+							localStorage["collectH"]=JSON.stringify(Hcollect);														
+							localStorage["lengthH"]=JSON.stringify(Hlengs);
+							localStorage["lengthD"]=JSON.stringify(Dlengs);
+							localStorage["Dates"]=JSON.stringify(Dates);	
+							localStorage["Names"]=JSON.stringify(Names);
+							localStorage["params"]=JSON.stringify(params);
+							localStorage["lengs"]=JSON.stringify(lengs);
+							window.location.reload();																					
+						}
+					}					
+				});
+				$("#showtab").click(function(){
+					var Hlengs = JSON.parse(localStorage["lengthH"]);
+					var Dlengs = JSON.parse(localStorage["lengthD"]);
+					var Dates = JSON.parse(localStorage["Dates"]);
+					var Names = JSON.parse(localStorage["Names"]);										
+					var Hcollect = JSON.parse(localStorage["collectH"]);
+					var Dcollect = JSON.parse(localStorage["collectD"]);	
+					var params = JSON.parse(localStorage["params"]);
+					var lengs = JSON.parse(localStorage["lengs"]);														
+					var infobuttons = document.getElementsByName("infobuttons");	
+					for(var j=0;j<Hlengs.length;j++){
+						if($(mr).text()==$(infobuttons[j]).text()){
+							var sumH = 0;
+							var sumD = 0;
+							for(var k=0;k<(j);k++){
+								sumH = Hlengs[k+1]+sumH;
+								sumD = Dlengs[k+1]+sumD;								
+							}							
+							var All = Hcollect.splice(sumH+1,Hlengs[j+1]);
+							var t = getcolumn(All,0,Hlengs[j+1]);
+							var M = getcolumn(All,1,Hlengs[j+1]);
+							var newlengs = lengs[j+1];
+							var checkleng = 4;
+							for(var countleng = 0;countleng<j; countleng++){
+								checkleng = checkleng + lengs[countleng+1];
+							}			
+							t = t.splice(1,t.length-1);
+							M = M.splice(1,M.length-1);						
+							var paramsi = params.splice(4*(j+1),4);	//params is a row vector!	
+							var fndata = logistic_func(t,paramsi[0],paramsi[1],paramsi[2],paramsi[3]);
+							$("#datatablex td").remove();
+							for(var i=0;i<t.length;i++){
+								if(Math.sqrt(Math.pow((M[i]-fndata[i]),2))/fndata[i]<=0.1){
+									$("#datatablex").find('tbody').append($('<tr class="success">').append($('<td>').text((i+1).toString())).append($('<td>').text(t[i].toString())).append($('<td>').text(M[i].toString())).append($('<td>').text("04/12/2013")).append($	('<td>').text("Good")));	
+								}else if(0.3>(Math.sqrt(Math.pow((M[i]-fndata[i]),2))/fndata[i])>0.1){
+									$("#datatablex").find('tbody').append($('<tr class="warning">').append($('<td>').text((i+1).toString())).append($('<td>').text(t[i].toString())).append($('<td>').text(M[i].toString())).append($('<td>').text("04/12/2013")).append($('<td>').text("Ok")));			
+								}else{
+									$("#datatablex").find('tbody').append($('<tr class="danger">').append($('<td>').text((i+1).toString())).append($('<td>').text(t[i].toString())).append($('<td>').text(M[i].toString())).append($('<td>').text("04/12/2013")).append($('<td>').text("Bad")));			
+								}
+							}
+							$("#tabdiv").slideDown('fast');
+							
+														
+						}
+					}					
+				});
+				
+				$("#moretab").click(function(){
+					
+				});
+				
+				$("#mailtab").click(function(){
+					
+				});
+				
+				$("#closing").click(function(){	
+					if($(mr).text()=="Choose")
+					{	
+						$(mr).text("Info");
+						$(mr).css("color","black");			
+						$(mr).css("background","rgb(230,230,230)");						
+						$("#allbut2").slideToggle();
+					}
+									
+				});
+				
+			}
+			else
+			{
+				$(mr).text("Info");
+				$(mr).css("color","black");			
+				$(mr).css("background","rgb(230,230,230)");			
+			}	
+		}
+	}
+</script>
+<div id="midlevel" style="padding-top:75px">	
+<hr style="border:2px solid gray">
+</div>
+<div id="tabdiv">
+	<div id="closeb" style="position:fixed;color:white;background:red;left:12.5%;top:100px;width:20px;height:20px;text-align:center;line-height:20px;">X</div>
+	<table class="table table-hover" id="datatablex" style="position:relative;width:90%;margin-left:5%;margin-top:5%;margin-bottom:5%">
+		<thead>
+			<tr><th># No.</th><th>Time [s]</th><th>Concentration [cells/ml]</th><th>Date recorded</th><th>Prediction</th></tr>
+		</thead>
+		<tbody>			
+		</tbody>
+	</table>			
+</div>
+<script>
+	$("#closeb").click(function(){
+		$("#tabdiv").hide();
+	});
+</script>
+</body>
+</html>

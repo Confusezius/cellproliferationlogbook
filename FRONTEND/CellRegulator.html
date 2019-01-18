@@ -1,0 +1,207 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="text/javascript" src="js/numerics.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.image.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.time.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.errorbars.js"></script>
+<script type="text/javascript" src="js/flot/jquery.flot.navigate.js"></script>
+<script type="text/javascript" src="js/calculations.js"></script>
+<script type="text/javascript" src="js/numerics126.js"></script>
+<script type="text/javascript" src="js/canvas2image.js"></script>
+<script type="text/javascript" src="js/base64.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<link rel="stylesheet" href="css/bootstrap.css">
+<script>
+	 $(document).ready(function(){
+		$(".plotinfo").hide();
+		$(".plotinfo2").hide();		
+		$(".text").hide();
+		$("#bottomlevel").hide();
+		$("#container").hide();
+		$(".addinf").hide();
+		$("#progressb").hide();
+		$("#gcontainer").hide();
+		$("#block").hide();		
+		if(localStorage.getItem("check")===null){	
+			var M = new Array(1);
+			M[0] = new Array(2);
+			var GK = new Array(4);			
+			M[0][0]="X";
+			M[0][1]="Y";
+			GK[0]="K";
+			GK[1]="r";
+			GK[2]="t0";
+			GK[3]="ad";									
+			var Km= new Array(1);
+			Km[0]="Length:";	
+			var Plotnames= new Array(1);
+			Plotnames[0]="Plotnames:";		
+			localStorage["collectD"]=JSON.stringify(M);
+			localStorage["collectH"]=JSON.stringify(M);			
+			localStorage["lengthD"]=JSON.stringify(Km);
+			localStorage["lengthH"]=JSON.stringify(Km);	
+			localStorage["Dates"]=JSON.stringify(Km);
+			localStorage["Names"]=JSON.stringify(Km);	
+			localStorage["params"]=JSON.stringify(GK);
+			localStorage["lengs"]=JSON.stringify(Km);	
+			localStorage["Plotname"]=JSON.stringify(Plotnames);		
+			alert("Initialized!");													
+		}						
+	});	
+</script>
+<style>
+	#block{
+		background:rgba(10,10,10,0.5);
+		width:100%;
+		height:100%;
+		top:230px;
+		position:fixed;
+		z-index:9999 !important;
+	}
+	#optionlist{
+		width:20%;
+		height:450px;
+		top:75px;
+		position:fixed;
+		z-index:9999 !important;
+		right:150px;
+		background: rgba(232,232,232,1);
+		border-right: 3px solid grey;
+		border-top: 3px solid grey;
+		border-bottom: 3px solid grey;
+		border-left: 3px solid grey;
+		border-radius:4px;
+		padding: 10px 5px 12px 5px;		
+		box-shadow: 0px 3px 10px 6px rgba(119, 119, 119, 0.81);
+		-moz-box-shadow: 0px 3px 10px 6px rgba(119, 119, 119, 0.81);
+		-webkit-box-shadow: 0px 3px 10px 6px rgba(119, 119, 119, 0.81);	
+		display:none;	
+	}
+</style>
+</head>
+<body>
+<div id="toplevel" style="z-index:9999">
+	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" style="opacity:0.75;height:50px">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  		<div class="navbar-header">
+	  		<a class="navbar-brand" href="#">Proliferation Control</a>
+	  		<button type="button" class="btn btn-default navbar-btn navbar-right" style="position:fixed;left:40%">Signed in as <i>Karsten</i></button>
+	  		<a type="button" class="btn btn-info navbar-btn navbar-right" style="position:absolute;right:50px" href="Library.html"><b>Library</b></a>	  			  		
+	  	</div>
+	</nav>
+</div>
+<div id="midlevel" style="padding-top:75px;background:rgba(240,240,240,0.8)" class="">
+  <div class="col-lg-6">
+    <div class="input-group" style="width:95%">
+      <input type="text" class="form-control" id="iptext" placeholder="Enter filename">      
+      <div class="input-group-btn">
+        <button id="action" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">Load</button>               
+      </div>           
+    </div>
+  </div>
+    <button id="options" type="button" class="btn btn-warning" style="position:absolute;right:50px">Options</button>      
+<div style="margin-top:50px;width:40%;margin-left:2.5%" id="progressb">
+<h5 id="loadin">Loading...</h5>
+  <div class="progress">  
+	  <div class="progress-bar" id="progressbb" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemac="100" style="width:0%">
+	  </div>
+  </div>
+</div>
+<br>
+<hr>
+</div>
+<div id="total">
+<div id="block">
+</div>
+<div id="bottomlevel">
+<h3 style="text-align:left;margin-left:2.5%">Logistic fit through data points <button type="button" class="btn btn-default">Save as</button> <button type="button" class="btn btn-default">Convert</button> <button type="button" class="btn btn-danger">Begin realtime control</button> </h3>
+<div class="text">      
+</div>
+<br/>
+<br/>
+  <script>
+  $("#action").click(function(){
+  	var params=new Array(2);
+  	params[0]=0;
+ 	params[1]=0;
+  	var g=($("#iptext").val()).toString();
+  	var extradx=($("#ipp3").val()).toString();  	
+  	var extrady=($("#ipp4").val()).toString();   	
+  	var extraname=($("#ipp5").val()).toString();
+  	var extrax=($("#ipp1").val()).toString();  	
+  	var extray=($("#ipp2").val()).toString();  
+  	var check1=$("#ipp6").is(':checked')
+  	var check2=$("#ipp7").is(':checked')   		  		  		  			
+  	$(".text").load(g,function(result){prolcontrol(result,params,0.0000005,g,extradx,extrady,extraname,extrax,extray,check1,check2);});
+  })
+  $("#iptext").keypress(function(e) {
+    if(e.which == 13) {
+  		var params=new Array(2);
+  		params[0]=0;
+  		params[1]=0;
+  		var g=($("#iptext").val()).toString();
+  		var extradx=($("#ipp3").val()).toString();  	
+  		var extrady=($("#ipp4").val()).toString();   	
+  		var extraname=($("#ipp5").val()).toString();
+  		var extrax=($("#ipp1").val()).toString();  	
+  		var extray=($("#ipp2").val()).toString();  
+  		var check1=$("#ipp6").is(':checked')
+  		var check2=$("#ipp7").is(':checked')    			  		  		  			
+  		$(".text").load(g,function(result){prolcontrol(result,params,0.0000005,g,extradx,extrady,extraname,extrax,extray,check1,check2);});
+    }
+});  
+  $("#options").click(function(){
+	  $("#optionlist").slideDown();
+  });
+  </script>
+</div>	
+<div id="canvasflot" style="margin-left:2.5%">
+	<div id="flotplot" style="width:100%;height:70%"></div>
+</div>
+<div class="plotinfo" style="position:absolute;z-index:998;right:0px;top:200px;width:350px;height:70px;background:rgba(250,250,250,0.9);border:3px solid rgb(0,185,2);text-align:center;line-height:35px">No point selected!</div>
+<div class="plotinfo2" style="position:absolute;z-index:998;right:0px;bottom:0px;width:350px;height:300px;background:rgba(250,250,250,0.9);border:3px solid rgb(0,185,2);text-align:center;line-height:35px">Stuff</div>
+<br>
+<div id="gcontainer" style="border:1px solid black;margin-top:30px;margin-bottom:30px">
+<h3 style="text-align:left;margin-left:2.5%">Google Chart - Cellproliferation <a type="button" class="btn btn-default">Send via Email</a></h3>
+<div id="gcchart" style="height:75%;width:95%">
+</div> 
+</div>
+
+<div id="container" style="margin-left:17.5%">
+<h3 style="text-align:left;margin-left:10px">Table of datapoints </h3>
+<div id="dtb" style="margin-left:30px;border:3px solid rgb(230,230,230)">
+<br/>
+	<table class="table table-hover" id="datatable">
+		<thead>
+			<tr><th># No.</th><th>Time [h]</th><th>Concentration [cells/ml]</th><th>Date recorded</th><th>Prediction</th></tr>
+		</thead>
+		<tbody>			
+		</tbody>
+	</table>		
+</div>
+</div> 
+</div>
+<div id="optionlist">
+	<h4 style="position:absolute;left:20px">Options</h4>
+      <input type="text" id="ipp1" style="position:absolute;left:20px;top:70px;width:200px;height:40px" placeholder="Name x-Axis"> 	
+      <input type="text" id="ipp2" style="position:absolute;left:20px;top:120px;width:200px;height:40px" placeholder="Name y-Axis"> 	
+      <input type="text" id="ipp3" style="position:absolute;left:20px;top:170px;width:200px;height:40px" placeholder="x-Divider"> 	
+      <input type="text" id="ipp4" style="position:absolute;left:20px;top:220px;width:200px;height:40px" placeholder="y-Divider">
+      <input type="text" id="ipp5" style="position:absolute;left:20px;top:270px;width:200px;height:40px" placeholder="Plotname"> 
+      <div class="checkbox" style="position:absolute;left:20px;top:320px;">
+		  <label><input type="checkbox" id="ipp6">Flip vertically!</label>
+	  </div>
+      <div class="checkbox" style="position:absolute;left:20px;top:350px;">
+		  <label><input type="checkbox" id="ipp7">Flip horizontally!</label>
+	  </div>              	
+      <button id="closem" class="btn btn-success" style="position:absolute;width:100px;bottom:30px;left:75px" >Close</button>                  
+</div>
+<script>
+$("#closem").click(function(){$("#optionlist").hide();});
+</script>
+</body>
+</html>
